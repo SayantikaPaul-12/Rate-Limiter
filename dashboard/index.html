@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rate Limiter Dashboard</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0f1a; color: #e2e8f0; min-height: 100vh; }
+
+    .header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid #1e3a5f; padding: 28px 32px; text-align: center; }
+    .header h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; background: linear-gradient(270deg, #60a5fa, #a78bfa, #f472b6, #60a5fa); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 4s ease infinite; }
+    @keyframes shimmer { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .header .subtitle { color: #64748b; font-size: 14px; margin-top: 6px; letter-spacing: 0.03em; }
+
+    .config-bar { background: #111827; border-bottom: 1px solid #1f2937; padding: 14px 32px; display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap; }
+    .config-item { display: flex; align-items: center; gap: 10px; }
+    .config-item label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+    .config-item input[type="range"] { width: 150px; accent-color: #3b82f6; }
+    .config-item .val { font-size: 14px; font-weight: 700; color: #60a5fa; min-width: 40px; }
+    .config-item select { padding: 6px 10px; background: #1f2937; border: 1px solid #374151; border-radius: 6px; color: #e2e8f0; font-size: 12px; cursor: pointer; }
+    .config-item select:hover { border-color: #4b5563; }
+    .btn-reset { padding: 8px 18px; border: 1px solid #1e3a5f; border-radius: 8px; background: transparent; color: #60a5fa; cursor: pointer; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; }
+    .btn-reset:hover { background: #1e3a5f; color: white; }
+
+    .layout { display: grid; grid-template-columns: 280px 1fr 340px; gap: 0; min-height: calc(100vh - 130px); }
+
+    /* Left Panel */
+    .panel-left { background: #111827; border-right: 1px solid #1f2937; padding: 24px 20px; overflow-y: auto; }
+    .panel-left h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 20px; font-weight: 600; }
+
+    .endpoint-group { margin-bottom: 16px; }
+    .endpoint-label { font-size: 13px; color: #d1d5db; margin-bottom: 8px; font-weight: 500; font-family: 'SF Mono', Monaco, monospace; }
+    .endpoint-buttons { display: flex; gap: 6px; }
+
+    .btn { padding: 7px 14px; border: 1px solid #1f2937; border-radius: 8px; background: #1f2937; color: #d1d5db; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; }
+    .btn:hover { background: #374151; border-color: #4b5563; color: white; }
+    .btn:active { transform: scale(0.96); }
+    .btn-burst { background: linear-gradient(135deg, #7f1d1d, #991b1b); border-color: #b91c1c; color: #fecaca; font-weight: 600; }
+    .btn-burst:hover { background: linear-gradient(135deg, #991b1b, #b91c1c); color: white; }
+
+    .user-select { margin-top: 20px; }
+    .user-select label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+    .user-select select { width: 100%; padding: 9px 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: #e2e8f0; font-size: 13px; cursor: pointer; }
+
+    /* Center Panel */
+    .panel-center { padding: 24px; overflow-y: auto; background: #0a0f1a; }
+    .panel-center h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 20px; font-weight: 600; }
+
+    .window-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 18px; margin-bottom: 14px; transition: border-color 0.2s; }
+    .window-card:hover { border-color: #374151; }
+    .window-key { font-size: 12px; color: #6b7280; margin-bottom: 12px; word-break: break-all; font-family: 'SF Mono', Monaco, monospace; }
+    .window-bar-bg { background: #1f2937; border-radius: 8px; height: 36px; position: relative; overflow: hidden; }
+    .window-bar-fill { height: 100%; border-radius: 8px; transition: width 0.3s ease, background 0.3s; display: flex; align-items: center; padding-left: 12px; font-size: 13px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+    .window-stats { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: #4b5563; }
+
+    /* Dot trail */
+    .dot-trail { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.2s; }
+    .dot-green { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+    .dot-red { background: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+
+    /* Right Panel */
+    .panel-right { background: #111827; border-left: 1px solid #1f2937; padding: 24px 20px; overflow-y: auto; }
+    .panel-right h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 20px; font-weight: 600; }
+
+    .response-card { border-radius: 10px; padding: 14px; margin-bottom: 10px; font-size: 13px; border: 1px solid; transition: transform 0.15s; }
+    .response-card:first-child { animation: slideIn 0.2s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .response-allowed { background: #052e16; border-color: #14532d; }
+    .response-blocked { background: #450a0a; border-color: #7f1d1d; }
+    .response-status { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+    .response-detail { color: #9ca3af; line-height: 1.6; }
+    .response-headers { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; color: #6b7280; margin-top: 10px; background: #0a0f1a; padding: 10px; border-radius: 6px; line-height: 1.6; }
+
+    .empty-state { color: #374151; font-size: 14px; text-align: center; padding: 48px 24px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ─── API helpers ───
+    const api = {
+      simulate: (body) => fetch("/dashboard/simulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
+      status: () => fetch("/dashboard/status").then(r => r.json()),
+      updateConfig: (body) => fetch("/dashboard/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json()),
+      reset: () => fetch("/dashboard/reset", { method: "POST" }).then(r => r.json()),
+    };
+
+    // ─── Endpoints we can test ───
+    const ENDPOINTS = [
+      { method: "POST", path: "/api/login", label: "POST /api/login" },
+      { method: "POST", path: "/api/signup", label: "POST /api/signup" },
+      { method: "GET",  path: "/api/search", label: "GET /api/search" },
+      { method: "GET",  path: "/api/data",   label: "GET /api/data" },
+      { method: "GET",  path: "/api/settings", label: "GET /api/settings" },
+    ];
+
+    const USERS = [
+      { id: "user_alice", label: "Alice" },
+      { id: "user_bob", label: "Bob" },
+      { id: undefined, label: "Anonymous (IP only)" },
+    ];
+
+    function App() {
+      const [responses, setResponses] = useState([]);
+      const [status, setStatus] = useState(null);
+      const [userId, setUserId] = useState("user_alice");
+      const [defaultLimit, setDefaultLimit] = useState(100);
+      const [keyStrategy, setKeyStrategy] = useState("ip,endpoint");
+      const [dots, setDots] = useState([]);
+      const pollRef = useRef(null);
+
+      const fetchStatus = useCallback(async () => {
+        try { setStatus(await api.status()); } catch {}
+      }, []);
+
+      useEffect(() => {
+        fetchStatus();
+        pollRef.current = setInterval(fetchStatus, 1000);
+        return () => clearInterval(pollRef.current);
+      }, [fetchStatus]);
+
+      useEffect(() => {
+        api.status().then(s => {
+          if (s?.config) {
+            setDefaultLimit(s.config.default.limit);
+            setKeyStrategy(s.config.keyStrategy.join(","));
+          }
+        });
+      }, []);
+
+      const sendRequest = async (method, path) => {
+        const result = await api.simulate({ method, path, userId: userId || undefined, ip: "192.168.1.1" });
+        setResponses(prev => [{ ...result, method, path, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 50));
+        setDots(prev => [{ allowed: result.allowed }, ...prev].slice(0, 60));
+        fetchStatus();
+      };
+
+      const sendBurst = async (count = 20) => {
+        for (let i = 0; i < count; i++) {
+          await sendRequest("GET", "/api/data");
+        }
+      };
+
+      const updateLimit = async (val) => {
+        setDefaultLimit(val);
+        await api.updateConfig({ defaultLimit: val });
+        fetchStatus();
+      };
+
+      const updateStrategy = async (val) => {
+        setKeyStrategy(val);
+        await api.updateConfig({ keyStrategy: val.split(",").map(s => s.trim()) });
+        fetchStatus();
+      };
+
+      const handleReset = async () => {
+        await api.reset();
+        setResponses([]);
+        setDots([]);
+        fetchStatus();
+      };
+
+      const windows = status?.windows ? Object.entries(status.windows) : [];
+
+      return (
+        <div>
+          {/* Header */}
+          <div className="header">
+            <h1>Rate Limiter Dashboard</h1>
+            <div className="subtitle">Sliding Window Counter &middot; Live Visualization</div>
+          </div>
+
+          {/* Config Bar */}
+          <div className="config-bar">
+            <div className="config-item">
+              <label>Default Limit:</label>
+              <input type="range" min="5" max="500" value={defaultLimit} onChange={e => updateLimit(Number(e.target.value))} />
+              <span className="val">{defaultLimit}</span>
+            </div>
+            <div className="config-item">
+              <label>Key Strategy:</label>
+              <select value={keyStrategy} onChange={e => updateStrategy(e.target.value)}>
+                <option value="ip">IP only</option>
+                <option value="ip,endpoint">IP + Endpoint</option>
+                <option value="userId,endpoint">User + Endpoint</option>
+                <option value="userId">User only</option>
+                <option value="apiKey">API Key only</option>
+              </select>
+            </div>
+            <button className="btn-reset" onClick={handleReset}>Reset All</button>
+          </div>
+
+          {/* Main Layout */}
+          <div className="layout">
+            {/* Left: Controls */}
+            <div className="panel-left">
+              <h2>Send Requests</h2>
+
+              <div className="user-select">
+                <label>Acting as</label>
+                <select value={userId ?? ""} onChange={e => setUserId(e.target.value || undefined)}>
+                  {USERS.map(u => <option key={u.label} value={u.id ?? ""}>{u.label}</option>)}
+                </select>
+              </div>
+
+              <div style={{ marginTop: 24 }}>
+                {ENDPOINTS.map(ep => (
+                  <div className="endpoint-group" key={ep.label}>
+                    <div className="endpoint-label">{ep.label}</div>
+                    <div className="endpoint-buttons">
+                      <button className="btn" onClick={() => sendRequest(ep.method, ep.path)}>Send 1</button>
+                      <button className="btn" onClick={async () => { for (let i = 0; i < 5; i++) await sendRequest(ep.method, ep.path); }}>Send 5</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 24 }}>
+                <button className="btn btn-burst" onClick={() => sendBurst(20)} style={{ width: "100%", padding: "10px" }}>
+                  Burst Mode (20 requests)
+                </button>
+              </div>
+            </div>
+
+            {/* Center: Windows */}
+            <div className="panel-center">
+              <h2>Live Windows</h2>
+
+              {dots.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 11, color: "#4b5563", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>Request Trail</div>
+                  <div className="dot-trail">
+                    {dots.map((d, i) => (
+                      <div key={i} className={`dot ${d.allowed ? "dot-green" : "dot-red"}`} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {windows.length === 0 && (
+                <div className="empty-state">No active rate limit windows yet.<br/>Send some requests to see them appear.</div>
+              )}
+
+              {windows.map(([key, state]) => {
+                const limit = status?.config?.default?.limit ?? 100;
+                const endpointKey = key.includes("|") ? key.split("|").pop() : null;
+                const epLimit = endpointKey && status?.config?.endpoints?.[endpointKey]?.limit;
+                const effectiveLimit = epLimit ?? limit;
+                const pct = Math.min(100, (state.estimatedCount / effectiveLimit) * 100);
+                const color = pct >= 100 ? "#ef4444" : pct >= 75 ? "#f59e0b" : "#22c55e";
+
+                return (
+                  <div className="window-card" key={key}>
+                    <div className="window-key">{key}</div>
+                    <div className="window-bar-bg">
+                      <div className="window-bar-fill" style={{ width: `${Math.max(pct, 8)}%`, background: color }}>
+                        {state.estimatedCount}/{effectiveLimit}
+                      </div>
+                    </div>
+                    <div className="window-stats">
+                      <span>Current: {state.currCount}</span>
+                      <span>Previous: {state.prevCount}</span>
+                      <span>Estimated: {state.estimatedCount}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right: Responses */}
+            <div className="panel-right">
+              <h2>Response Inspector</h2>
+              {responses.length === 0 && (
+                <div className="empty-state">Responses will appear here<br/>as you send requests.</div>
+              )}
+              {responses.map((r, i) => (
+                <div key={i} className={`response-card ${r.allowed ? "response-allowed" : "response-blocked"}`}>
+                  <div className="response-status">
+                    {r.allowed ? "✓ 200 OK" : "✕ 429 Too Many Requests"}
+                  </div>
+                  <div className="response-detail">
+                    {r.method} {r.path} at {r.time}
+                  </div>
+                  {r.reason && <div className="response-detail" style={{ color: "#fca5a5", marginTop: 4 }}>{r.reason}</div>}
+                  <div className="response-headers">
+                    X-RateLimit-Limit: {r.limit}<br/>
+                    X-RateLimit-Remaining: {r.remaining}<br/>
+                    X-RateLimit-Reset: {new Date(Date.now() + r.retryAfterMs).toLocaleTimeString()}
+                    {r.retryAfterMs > 0 && <><br/>Retry-After: {Math.ceil(r.retryAfterMs / 1000)}s</>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
