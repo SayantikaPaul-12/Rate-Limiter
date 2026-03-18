@@ -71,7 +71,7 @@ rate-limiter/
 └── tsconfig.json
 ```
 
-```
+
 | File | Responsibility |
 |------|---------------|
 | `src/types.ts` | All interfaces and type contracts |
