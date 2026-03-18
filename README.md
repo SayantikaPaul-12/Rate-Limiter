@@ -5,7 +5,9 @@ A configurable rate limiter built in TypeScript using the **Sliding Window Count
 
 ## Demo
 
-Uploading RateLimiterNew.mp4…
+
+https://github.com/user-attachments/assets/e711d479-84eb-49ce-94f1-9ae25f1cd27a
+
 
 
 ---
@@ -13,6 +15,7 @@ Uploading RateLimiterNew.mp4…
 ## Architecture
 
 Each layer has a single responsibility and can be replaced independently.
+![Architecture](docs/Rate-Limiter.jpg)
 
 ---
 ## Documentation
@@ -24,7 +27,7 @@ Each layer has a single responsibility and can be replaced independently.
 | [API Reference](docs/api-reference.md) | Endpoints, response headers, and response formats |
 
 
-![Architecture](docs/Rate-Limiter.jpg)
+
 
 | File | Responsibility |
 |------|---------------|
