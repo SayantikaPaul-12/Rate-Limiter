@@ -29,19 +29,6 @@ Each layer has a single responsibility and can be replaced independently.
 
 
 
-| File | Responsibility |
-|------|---------------|
-| `src/types.ts` | All interfaces and type contracts |
-| `src/config.ts` | Reads `.env`, resolves per-endpoint limits |
-| `src/keyResolver.ts` | Builds composite keys from request context |
-| `src/slidingWindow.ts` | Sliding Window Counter algorithm + stale key cleanup |
-| `src/rateLimiter.ts` | Orchestrator — ties config + key + algorithm |
-| `src/middleware.ts` | Express middleware, HTTP headers, 429 responses |
-| `src/index.ts` | Express server, demo routes, dashboard API |
-| `dashboard/index.html` | Single-file React dashboard (no build step) |
-
-> Swap the algorithm? Replace `slidingWindow.ts`. Change key logic? Replace `keyResolver.ts`. Add Redis? Replace the `Map` in `slidingWindow.ts`. One file per concern.
-
 ---
 
 ## How It Works
@@ -84,6 +71,19 @@ rate-limiter/
 └── tsconfig.json
 ```
 
+```
+| File | Responsibility |
+|------|---------------|
+| `src/types.ts` | All interfaces and type contracts |
+| `src/config.ts` | Reads `.env`, resolves per-endpoint limits |
+| `src/keyResolver.ts` | Builds composite keys from request context |
+| `src/slidingWindow.ts` | Sliding Window Counter algorithm + stale key cleanup |
+| `src/rateLimiter.ts` | Orchestrator — ties config + key + algorithm |
+| `src/middleware.ts` | Express middleware, HTTP headers, 429 responses |
+| `src/index.ts` | Express server, demo routes, dashboard API |
+| `dashboard/index.html` | Single-file React dashboard (no build step) |
+
+> Swap the algorithm? Replace `slidingWindow.ts`. Change key logic? Replace `keyResolver.ts`. Add Redis? Replace the `Map` in `slidingWindow.ts`. One file per concern.
 ---
 
 ## Quick Start
