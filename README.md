@@ -2,21 +2,19 @@
 
 A configurable rate limiter built in TypeScript using the **Sliding Window Counter** algorithm. Features per-endpoint limits, composable key strategies, environment-driven configuration, and a real-time dashboard.
 
-## Quick Start
 
-```bash
-# 1. Install dependencies
-npm install
+## Demo
 
-# 2. Set up environment variables
-cp .env.example .env
+Uploading RateLimiterNew.mp4…
 
-# 3. Run in development mode
-npm run dev
 
-# Dashboard: http://localhost:3000/index.html
-```
+---
 
+## Architecture
+
+Each layer has a single responsibility and can be replaced independently.
+
+---
 ## Documentation
 
 | Document | Description |
@@ -25,11 +23,6 @@ npm run dev
 | [Configuration Guide](docs/configuration.md) | Environment variables, per-endpoint overrides, key strategies |
 | [API Reference](docs/api-reference.md) | Endpoints, response headers, and response formats |
 
----
-
-## Architecture
-
-Each layer has a single responsibility and can be replaced independently.
 
 ![Architecture](docs/Rate-Limiter.jpg)
 
@@ -88,6 +81,22 @@ rate-limiter/
 └── tsconfig.json
 ```
 
+---
+
+## Quick Start
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Set up environment variables
+cp .env.example .env
+
+# 3. Run in development mode
+npm run dev
+
+# Dashboard: http://localhost:3000/index.html
+```
 ---
 
 ## Configuration
